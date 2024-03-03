@@ -1,35 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
+import axios from "axios";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [urls, setUrls] = useState("");
+  const [getResponse, setGetResponse] = useState("");
+
+  const urlHandler = () => {
+    axios
+      .post("http://localhost:3001/api/create-new-note", { zip: urls })
+      .then((res) => {
+        console.log("POST response:", res);
+      })
+      .catch((error) => {
+        console.error("Error sending data to backend:", error);
+      });
+  };
+
+  useEffect(() => {
+    // Use useEffect to make the GET request when the component mounts
+    axios
+      .get("http://localhost:3001/api/get-all-notes")
+      .then((res) => {
+        setGetResponse(res.data.res);
+      })
+      .catch((error) => {
+        console.error("Error getting data from backend:", error);
+      });
+  }, []); // The empty dependency array ensures this effect runs once when the component mounts
 
   return (
     <>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <input
+          type="text"
+          placeholder="paste the url here"
+          value={urls}
+          onChange={(e) => setUrls(e.target.value)}
+        />
+        <button onClick={urlHandler}>Submit</button>
+
+        <div>{getResponse}</div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
