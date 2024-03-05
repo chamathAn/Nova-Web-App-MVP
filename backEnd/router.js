@@ -1,17 +1,9 @@
-// router.js
 const express = require("express");
 const router = express.Router();
-const createNote = require("./controller");
+const { createNote, getNote } = require("./controller");
+const asyncHandler = require("express-async-handler");
 
-router.post("/create-new-note", (req, res) => {
-  console.log(req.body);
-  res.send(req.body);
-});
+router.post("/create-new-note", asyncHandler(createNote));
+router.get("/get-all-notes", asyncHandler(getNote));
 
-router.get("/get-all-notes", (req, res) => {
-    setTimeout(() => {
-      res.send({ res: "All G" });
-    }, 4000);
-  });
-  
 module.exports = { router };
