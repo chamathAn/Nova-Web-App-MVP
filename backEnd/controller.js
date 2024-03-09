@@ -1,50 +1,62 @@
 const { spawn } = require("child_process");
+const { YoutubeTranscript } = require("youtube-transcript");
 
-let result;
-
+let ytUrl = "";
+let yt = ""; 
+let pyResult='';
 const createNote = async (req, res) => {
-  console.log(req.body);
+  ytUrl = req.body.zip.toString();
 
-  const py = spawn("python", [
-    "py_files/noteStructure.py",
-    req.body.zip.toString(),
-  ]);
+  // python script -----------------------------------------------------
 
-  let pyOutput = "";
+  // const py = spawn("python", [
+  //   "py_files/noteStructure.py",
+  //   req.body.zip.toString(),
+  // ]);
 
-  // Collect the output from the python script
-  py.stdout.on("data", (data) => {
-    pyOutput += data.toString();
-  });
+  // let pyOutput = "";
 
-  // Handle errors
-  py.stderr.on("data", (data) => {
-    console.error("stderr: ", data);
-  });
+  // // Collect the output from the python script
+  // py.stdout.on("data", (data) => {
+  //   pyOutput += data.toString();
+  // });
 
-  // Wrap the exit handling in a promise
-  const scriptExitPromise = new Promise((resolve) => {
-    py.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-      resolve();
-    });
-  });
+  // // Handle errors
+  // py.stderr.on("data", (data) => {
+  //   console.error("stderr: ", data);
+  // });
 
-  // Wait for the script to finish before sending the response
-  await scriptExitPromise;
+  // // Wrap the exit handling in a promise
+  // const scriptExitPromise = new Promise((resolve) => {
+  //   py.on("close", (code) => {
+  //     console.log(`child process exited with code ${code}`);
+  //     resolve();
+  //   });
+  // });
 
-  // Update the result after the script has finished
-  result = pyOutput.replace(/[\r\n]+/g, "");
+  // // Wait for the script to finish before sending the response
+  // await scriptExitPromise;
 
-  res.send(req.body);
+  // // Update the pyResult after the script has finished
+  // pyResult = pyOutput.replace(/[\r\n]+/g, "");
+
+  // ------------------------------------------------------------------
+
+  // Fetch YouTube transcript
+  await YoutubeTranscript.fetchTranscript(ytUrl)
+    .then((transcript) => {
+      yt = transcript.map((entry) => entry.text).join(' '); // map the transcript to a string
+      console.log(yt);
+    })
+    .catch(console.error);
+    res.json({ res: "Success" });
 };
 
 const getNote = (req, res) => {
-  // Check if result is available, if not, wait for a short time
-  if (!result) {
+  if (!yt) { // Check the youtube transcript is acutually there
     res.send({ res: "No result yet" });
   } else {
-    res.send({ res: result });
+    res.send({ res: yt });
   }
 };
 

@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 
+const API_KEY = "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";
+const systemMessage = {
+  role: "system",
+  content:
+    "Structure the note into two sections. The first section is about questions about the note, and the second section is about structuring the note. Give the first section under the 'Questions' topic, make questions from the note, and stick them into the note itself. Give the second section under 'Structured Note' topic and structure note in the most understandable way.",
+};
+
 function App() {
+  const [structuredTranscript, setStructuredTranscript] = useState("");
   const [urls, setUrls] = useState("");
   const [getResponse, setGetResponse] = useState("");
 
@@ -26,11 +34,54 @@ function App() {
       const response = await axios.get(
         "http://localhost:3001/api/get-all-notes"
       );
-      setGetResponse(response.data.res);
+
+      // Process the transcript for structuring
+      await handleStructringTranscript(response.data.res);
     } catch (error) {
       console.error("Error getting data from backend:", error);
     }
   };
+
+  // LLM executions-----------------------------------------
+
+  // Handle the user message
+  const handleStructringTranscript = async (message) => {
+    // Process the transcript with ChatGPT
+    await processMessage(message);
+  };
+
+  // Process the message to send to ChatGPT
+  async function processMessage(message) {
+    // Set up the request body for the ChatGPT API
+    const apiRequestBody = {
+      model: "gpt-3.5-turbo",
+      messages: [
+        systemMessage,
+        { role: "user", content: message }, // Adjust this line
+      ],
+    };
+
+    // Fetch from ChatGPT
+    const data = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(apiRequestBody),
+    });
+
+    const jsonData = await data.json();
+    console.log(jsonData);
+
+    // Update the structuredTranscript with the response from ChatGPT
+    setStructuredTranscript(jsonData.choices[0].message.content);
+  }
+
+  useEffect(() => {
+    // Update the state to display the output immediately
+    setGetResponse(structuredTranscript);
+  }, [structuredTranscript]);
 
   return (
     <>
