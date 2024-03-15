@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import axios from "axios";
 
@@ -10,6 +10,7 @@ const systemMessage = {
 };
 
 function App() {
+  const [structurdNote, setStructurdNote] = useState("");
   const [structuredTranscript, setStructuredTranscript] = useState("");
   const [urls, setUrls] = useState("");
   const [getResponse, setGetResponse] = useState("");
@@ -79,9 +80,27 @@ function App() {
   }
 
   useEffect(() => {
-    // Update the state to display the output immediately
-    setGetResponse(structuredTranscript);
+    
+  
+    // Check if structuredTranscript is not empty and contains the structured note
+    if (structuredTranscript && structuredTranscript.includes("Structured Note:")) {
+      // Extract the structured note
+      const structuredNote = structuredTranscript.split("Structured Note:")[1].trim();
+      
+      // Send the structured note to the backend to generate summary
+      axios.post(
+        "http://localhost:3001/api/create-summary",
+        { noteToSummarize: structuredNote }
+      ).then((response) => {
+        console.log("Summary generated:", response.data.summary);
+        setStructurdNote(response.data.summary);
+      }).catch((error) => {
+        console.error("Error generating summary:", error);
+      });
+    }
   }, [structuredTranscript]);
+  
+
 
   return (
     <>
@@ -95,7 +114,9 @@ function App() {
         <button onClick={urlHandler}>Submit</button>
 
         {/* Display the output immediately */}
-        <div>{getResponse}</div>
+        <div>{structuredTranscript}</div>
+        <div>Summary</div>
+        <div>{structurdNote}</div>
       </div>
     </>
   );
